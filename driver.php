@@ -2,7 +2,7 @@
 include "really-simple-captcha.php";
 $numChars = 7;
 $charWidth = 15;
-$numImages=10000;
+$numImages=100;
 // create the instance of the generator
 $captcha_instance = new ReallySimpleCaptcha();
 
