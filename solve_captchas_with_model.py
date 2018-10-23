@@ -1,3 +1,5 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 from keras.models import load_model
 from helpers import resize_to_fit
 from imutils import paths
@@ -9,8 +11,9 @@ import pickle
 
 MODEL_FILENAME = "captcha_model.hdf5"
 MODEL_LABELS_FILENAME = "model_labels.dat"
-CAPTCHA_IMAGE_FOLDER = "tmp"
+CAPTCHA_IMAGE_FOLDER = "test"
 
+numChars=7
 
 # Load up the model labels (so we can translate model predictions to actual letters)
 with open(MODEL_LABELS_FILENAME, "rb") as f:
@@ -18,13 +21,13 @@ with open(MODEL_LABELS_FILENAME, "rb") as f:
 
 # Load the trained neural network
 model = load_model(MODEL_FILENAME)
-
 # Grab some random CAPTCHA images to test against.
 # In the real world, you'd replace this section with code to grab a real
 # CAPTCHA image from a live website.
 captcha_image_files = list(paths.list_images(CAPTCHA_IMAGE_FOLDER))
 captcha_image_files = np.random.choice(captcha_image_files, size=(10,), replace=False)
 
+print(captcha_image_files)
 # loop over the image paths
 for image_file in captcha_image_files:
     # Load the image and convert it to grayscale
@@ -63,10 +66,10 @@ for image_file in captcha_image_files:
             # This is a normal letter by itself
             letter_image_regions.append((x, y, w, h))
 
-    # If we found more or less than 4 letters in the captcha, our letter extraction
-    # didn't work correcly. Skip the image instead of saving bad training data!
-    if len(letter_image_regions) != 4:
-        continue
+    # # If we found more or less than 4 letters in the captcha, our letter extraction
+    # # didn't work correcly. Skip the image instead of saving bad training data!
+    # if len(letter_image_regions) != numChars:
+    #     continue
 
     # Sort the detected letter images based on the x coordinate to make sure
     # we are processing them from left-to-right so we match the right image

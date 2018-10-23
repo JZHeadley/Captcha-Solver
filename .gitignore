@@ -2,3 +2,6 @@ tmp/
 __pycache__/
 venv/
 extracted_letters/
+train/
+test/
+captcha_model.hdf5

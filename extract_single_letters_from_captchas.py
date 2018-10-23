@@ -5,7 +5,7 @@ import glob
 import imutils
 
 
-CAPTCHA_IMAGE_FOLDER = "tmp"
+CAPTCHA_IMAGE_FOLDER = "train"
 OUTPUT_FOLDER = "extracted_letters"
 
 
@@ -13,7 +13,7 @@ OUTPUT_FOLDER = "extracted_letters"
 captcha_image_files = glob.glob(os.path.join(CAPTCHA_IMAGE_FOLDER, "*"))
 counts = {}
 
-numChars=7
+numChars=4
 
 # loop over the image paths
 for (i, captcha_image_file) in enumerate(captcha_image_files):
