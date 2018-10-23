@@ -7,6 +7,7 @@ import numpy as np
 import imutils
 import cv2
 import pickle
+from sklearn.metrics import accuracy_score
 
 
 MODEL_FILENAME = "captcha_model.hdf5"
@@ -25,9 +26,11 @@ model = load_model(MODEL_FILENAME)
 # In the real world, you'd replace this section with code to grab a real
 # CAPTCHA image from a live website.
 captcha_image_files = list(paths.list_images(CAPTCHA_IMAGE_FOLDER))
-captcha_image_files = np.random.choice(captcha_image_files, size=(10,), replace=False)
-
-print(captcha_image_files)
+true_values=[]
+# captcha_image_files = np.random.choice(captcha_image_files, size=(10,), replace=False)
+for i in range(0,captcha_image_files.__len__()):
+    true_values.append(captcha_image_files[i].replace("test/","").replace(".png",""))
+final_predictions=[]
 # loop over the image paths
 for image_file in captcha_image_files:
     # Load the image and convert it to grayscale
@@ -109,7 +112,8 @@ for image_file in captcha_image_files:
     # Print the captcha's text
     captcha_text = "".join(predictions)
     print("CAPTCHA text is: {}".format(captcha_text))
-
+    final_predictions.append(captcha_text)
     # Show the annotated image
-    cv2.imshow("Output", output)
-    cv2.waitKey()
+    # cv2.imshow("Output", output)
+    # cv2.waitKey()
+print("We're predicting captchas with ",accuracy_score(true_values,final_predictions)*100,"% accuracy")

@@ -1,10 +1,9 @@
 <?php
 include "really-simple-captcha.php";
-$numChars = 7;
 $charWidth = 64;
 $fontSize = $charWidth;
-$numTrain = 1000;
-$numTest = 1000;
+$numTrain = 25000;
+$numTest = 5000;
 $imageHeight = 100;
 $trainDir = "train";
 $testDir = "test";
@@ -19,6 +18,9 @@ function generate_dataset($dir, $numChars, $numImages)
     $imageWidth = ($numChars + 1) * $GLOBALS['charWidth'];
 
     $captcha_instance->tmp_dir = __DIR__ . '/' . $dir;
+    if (!file_exists($captcha_instance->tmp_dir)) {
+        mkdir($captcha_instance->tmp_dir, 0755, true);
+    }
     $imageWidth = ($numChars + 1) * $GLOBALS['charWidth'];
     $captcha_instance->char_length = $numChars;
     $captcha_instance->font_char_width = $GLOBALS['charWidth'];
@@ -30,11 +32,11 @@ function generate_dataset($dir, $numChars, $numImages)
         // generate a random word
         $word = $captcha_instance->generate_random_word();
 
-        echo ($word . "\n");
+        // echo ($word . "\n");
         // generate the image file and write it to filesystem
         $captcha_instance->generate_image($word, $word);
     }
 }
 
-generate_dataset($trainDir, 4, $numTrain);
+generate_dataset($trainDir, 7, $numTrain);
 generate_dataset($testDir, 7, $numTest);
