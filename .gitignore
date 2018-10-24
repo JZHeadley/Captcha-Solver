@@ -7,3 +7,6 @@ test/
 captcha_model.hdf5
 model_labels.dat
 captchas/
+
+.vscode/
+geckodriver.log
