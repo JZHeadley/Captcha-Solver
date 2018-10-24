@@ -2,11 +2,11 @@
 include "really-simple-captcha.php";
 $charWidth = 64;
 $fontSize = $charWidth;
-$numTrain = 25000;
-$numTest = 5000;
+$numTrain = 10000;
+$numTest = 1000;
 $imageHeight = 100;
-$trainDir = "train";
-$testDir = "test";
+$trainDir = "../../train";
+$testDir = "../../test";
 
 // create the instance of the generator
 // set the generator variables to be what we want
