@@ -114,6 +114,6 @@ for image_file in captcha_image_files:
     print("CAPTCHA text is: {}".format(captcha_text))
     final_predictions.append(captcha_text)
     # Show the annotated image
-    # cv2.imshow("Output", output)
-    # cv2.waitKey()
+    cv2.imshow("Output", output)
+    cv2.waitKey()
 print("We're predicting captchas with ",accuracy_score(true_values,final_predictions)*100,"% accuracy")
