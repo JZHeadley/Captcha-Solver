@@ -3,8 +3,6 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt
 from PIL import Image, ImageFilter
-# from imutils import paths
-import pytesseract
 
 
 def opencv_trials(grey):
@@ -116,17 +114,66 @@ def extraction(img):
     return np.delete(img, to_delete, axis=0)
 
 
+def contourImage(img, rows_to_delete, cols_to_delete):
+    # blur = cv2.GaussianBlur(img, (3, 3), 0)
+    blur = cv2.medianBlur(img,3)
+    bilateral = cv2.bilateralFilter(blur, 3, 75, 75)
+    _, thresh = cv2.threshold(bilateral, 125    , 255, cv2.THRESH_BINARY_INV)
+
+    new_img = np.delete(thresh, rows_to_delete[:15], axis=0)#[:25]
+    shape = img[:, 0].shape
+    for i in range(0, cols_to_delete.__len__()):
+        new_img[:, cols_to_delete[i]] = 0
+
+    _, contours, _ = cv2.findContours(
+        new_img.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    letter_image_regions = []
+
+    # Now we can loop through each of the four contours and extract the letter
+    # inside of each one
+    for contour in contours:
+        # Get the rectangle that contains the contour
+        x, y, w, h = cv2.boundingRect(contour)
+
+        # if w / h > 1.25:
+        #     # This contour is too wide to be a single letter!
+        #     # Split it in half into two letter regions!
+        #     half_width = int(w / 2)
+        #     letter_image_regions.append((x, y, half_width, h))
+        #     letter_image_regions.append((x + half_width, y, half_width, h))
+        # else:
+        #     # This is a normal letter by itself
+        letter_image_regions.append((x, y, w, h))
+    letter_image_regions = sorted(letter_image_regions, key=lambda x: x[0])
+    output = new_img.copy()
+    for letter_bounding_box in letter_image_regions:
+        print(letter_bounding_box)
+        # Grab the coordinates of the letter in the image
+        x, y, w, h = letter_bounding_box
+        cv2.rectangle(output, (x - 2, y - 2),
+                      (x + w + 4, y + h + 4), (60, 70, 0), 1)
+    return thresh, output
+
+
 if __name__ == "__main__":
     img = cv2.imread("captchas/captcha0.jpg", cv2.IMREAD_GRAYSCALE)
-    plt.gray()
+    # plt.gray()
 
-    row_counts = np.zeros(img.shape[0]).reshape(img.shape[0], 1)
+    row_counts = np.zeros(img.shape[0]-20).reshape(img.shape[0]-20, 1)
     column_counts = np.zeros(img.shape[1]).reshape(img.shape[1], 1)
-    for file in os.listdir("captchas"):
-        img = cv2.imread("captchas/" + file, cv2.IMREAD_GRAYSCALE)
-        blur = cv2.GaussianBlur(img, (5, 5), 0)
-        bilateral = cv2.bilateralFilter(blur, 5, 75, 75)
+    count = 1
+    captcha_dir = "captchas/"
+    images = os.listdir(captcha_dir)
+    captcha_image_files = np.random.choice(images, size=(5,), replace=False)
+
+    for img_src in captcha_image_files:
+        img = cv2.imread(captcha_dir+img_src, cv2.IMREAD_GRAYSCALE)
+        # blur = cv2.GaussianBlur(img, (3, 3), 0)
+        blur = cv2.medianBlur(img,3) # got better results with median blurring
+        bilateral = cv2.bilateralFilter(blur, 3, 75, 75)
         _, img = cv2.threshold(bilateral, 150, 255, cv2.THRESH_BINARY)
+        img=img[:-20,:]
+
 
         img_row_count = np.count_nonzero(img == 0, axis=1)
         img_col_count = np.count_nonzero(img == 0, axis=0)
@@ -137,61 +184,21 @@ if __name__ == "__main__":
         row_counts += img_row_count
         column_counts += img_col_count
 
-    img = cv2.imread("captchas/captcha3.jpg", cv2.IMREAD_GRAYSCALE)
-    or_img=img.copy()
-    blur = cv2.GaussianBlur(img, (5, 5), 0)
-    bilateral = cv2.bilateralFilter(blur, 5, 75, 75)
-    _, thresh = cv2.threshold(bilateral, 125, 255, cv2.THRESH_BINARY)
-    rows_to_delete = np.argsort(row_counts.reshape(1, row_counts.shape[0]))[0]
-    cols_to_delete = np.argsort(
-        column_counts.reshape(1, column_counts.shape[0]))[0][:80]
+        rows_to_delete = np.argsort(
+            row_counts.reshape(1, row_counts.shape[0]))[0]
+        cols_to_delete = np.argsort(column_counts.reshape(
+            1, column_counts.shape[0]))[0][:80]
+        thresh, output = contourImage(img, rows_to_delete, cols_to_delete)
 
-    new_img = np.delete(thresh, rows_to_delete[:30], axis=0)[:30]
-    shape = img[:, 0].shape
-    for i in range(0, cols_to_delete.__len__()):
-        new_img[:, cols_to_delete[i]] = 255
+        plt.subplot(5, 3, count)
+        plt.imshow(img)
+        count += 1
+        plt.subplot(5, 3, count)
+        plt.imshow(thresh)
+        count += 1
+        plt.subplot(5, 3, count)
+        plt.imshow(output)
+        count += 1
 
-    _, contours, _ = cv2.findContours(
-        new_img.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    letter_image_regions = []
-
-    # Now we can loop through each of the four contours and extract the letter
-    # inside of each one
-    for contour in contours:
-        # Get the rectangle that contains the contour
-        x, y, w, h = cv2.boundingRect(contour)
-
-        # Compare the width and height of the contour to detect letters that
-        # are conjoined into one chunk
-        if w / h > 1.25:
-            # This contour is too wide to be a single letter!
-            # Split it in half into two letter regions!
-            half_width = int(w / 2)
-            letter_image_regions.append((x, y, half_width, h))
-            letter_image_regions.append((x + half_width, y, half_width, h))
-        else:
-            # This is a normal letter by itself
-            letter_image_regions.append((x, y, w, h))
-    letter_image_regions = sorted(letter_image_regions, key=lambda x: x[0])
-    output = new_img.copy()
-    for letter_bounding_box in letter_image_regions:
-        print(letter_bounding_box)
-        # Grab the coordinates of the letter in the image
-        x, y, w, h = letter_bounding_box
-        cv2.rectangle(output, (x - 2, y - 2),
-                      (x + w + 4, y + h + 4), (60, 70, 0), 1)
-        # cv2.putText(output, letter, (x - 5, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 0), 2)
-    cv2.drawContours(output, contours, -1, (120, 20, 60), 1)
-
-    plt.subplot(2, 2, 1)
-    plt.imshow(or_img)
-
-    plt.subplot(2, 2, 2)
-    plt.imshow(thresh)
-
-    plt.subplot(2, 2, 3)
-    plt.imshow(new_img)
-    plt.subplot(2, 2, 4)
-    plt.imshow(output)
     plt.tight_layout()
     plt.show()
