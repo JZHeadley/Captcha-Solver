@@ -116,15 +116,20 @@ def extraction(img):
 
 def contourImage(img, rows_to_delete, cols_to_delete):
     # blur = cv2.GaussianBlur(img, (3, 3), 0)
-    blur = cv2.medianBlur(img,3)
+    blur = cv2.medianBlur(img, 3)
     bilateral = cv2.bilateralFilter(blur, 3, 75, 75)
-    _, thresh = cv2.threshold(bilateral, 125    , 255, cv2.THRESH_BINARY_INV)
+    _, thresh = cv2.threshold(bilateral, 125, 255, cv2.THRESH_BINARY_INV)
 
-    new_img = np.delete(thresh, rows_to_delete[:15], axis=0)#[:25]
+    new_img = np.delete(thresh, rows_to_delete[:10], axis=0)  # [:25]
     shape = img[:, 0].shape
+    cols_to_delete=cols_to_delete[:10]
     for i in range(0, cols_to_delete.__len__()):
         new_img[:, cols_to_delete[i]] = 0
-
+    kernel=np.ones((4,2),np.uint8)
+    erosion=cv2.erode(new_img,kernel,iterations=1)
+    kernel=np.ones((2,1),np.uint8)
+    erosion=cv2.erode(erosion,kernel,iterations=1)
+    new_img=erosion
     _, contours, _ = cv2.findContours(
         new_img.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     letter_image_regions = []
@@ -163,17 +168,18 @@ if __name__ == "__main__":
     column_counts = np.zeros(img.shape[1]).reshape(img.shape[1], 1)
     count = 1
     captcha_dir = "captchas/"
+    out_dir = "captcha_threshs/"
     images = os.listdir(captcha_dir)
     captcha_image_files = np.random.choice(images, size=(5,), replace=False)
 
     for img_src in captcha_image_files:
         img = cv2.imread(captcha_dir+img_src, cv2.IMREAD_GRAYSCALE)
         # blur = cv2.GaussianBlur(img, (3, 3), 0)
-        blur = cv2.medianBlur(img,3) # got better results with median blurring
+        # got better results with median blurring
+        blur = cv2.medianBlur(img, 3)
         bilateral = cv2.bilateralFilter(blur, 3, 75, 75)
         _, img = cv2.threshold(bilateral, 150, 255, cv2.THRESH_BINARY)
-        img=img[:-20,:]
-
+        img = img[:-20, :]
 
         img_row_count = np.count_nonzero(img == 0, axis=1)
         img_col_count = np.count_nonzero(img == 0, axis=0)
@@ -189,7 +195,16 @@ if __name__ == "__main__":
         cols_to_delete = np.argsort(column_counts.reshape(
             1, column_counts.shape[0]))[0][:80]
         thresh, output = contourImage(img, rows_to_delete, cols_to_delete)
+        canny = cv2.Canny(thresh, 50, 150)
 
+        # lines = cv2.HoughLinesP(canny, 1, np.pi/60, 15, np.array([]),
+        #                         50, 20)
+        # line_img = img.copy()
+        # for line in lines:
+        #     for x1, y1, x2, y2 in line:
+        #         cv2.line(line_img, (x1, y1), (x2, y2), (255, 0, 0), 5)
+
+        cv2.imwrite(out_dir+img_src, thresh)
         plt.subplot(5, 3, count)
         plt.imshow(img)
         count += 1

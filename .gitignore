@@ -10,3 +10,5 @@ captchas/
 
 .vscode/
 geckodriver.log
+*.png
+captcha_threshs
