@@ -122,13 +122,15 @@ def contourImage(img, rows_to_delete, cols_to_delete):
 
     new_img = np.delete(thresh, rows_to_delete[:10], axis=0)  # [:25]
     shape = img[:, 0].shape
-    cols_to_delete=cols_to_delete[:10]
+    cols_to_delete=cols_to_delete[:15]
     for i in range(0, cols_to_delete.__len__()):
         new_img[:, cols_to_delete[i]] = 0
     kernel=np.ones((4,2),np.uint8)
     erosion=cv2.erode(new_img,kernel,iterations=1)
-    kernel=np.ones((2,1),np.uint8)
+    kernel=np.ones((1,2),np.uint8)
     erosion=cv2.erode(erosion,kernel,iterations=1)
+
+    # dilation=cv2.dilate(erosion,np.ones((1,2),np.uint8),iterations=1)
     new_img=erosion
     _, contours, _ = cv2.findContours(
         new_img.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
