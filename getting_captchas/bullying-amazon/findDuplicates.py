@@ -1,6 +1,10 @@
 import hashlib
 import os
-
+"""
+In solving these I discovered that there are duplicate captchas given to me
+This script should find all the duplicates so I can keep track of them
+and solve them later
+"""
 captcha_dir = "captchas/"
 
 hashes = []
@@ -21,7 +25,6 @@ for x in hashes:
         if seen[x[1]] is not None:
             seen[x[1]].append(x[0])
             dupes.append(x[0])
-        # seen[x[1]] += 1
 dupes.sort()
 
 # print(seen)
