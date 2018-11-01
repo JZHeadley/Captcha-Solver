@@ -5,7 +5,7 @@ import glob
 import imutils
 
 
-CAPTCHA_IMAGE_FOLDER = "train"
+CAPTCHA_IMAGE_FOLDER = "captchas_solved"
 OUTPUT_FOLDER = "extracted_letters"
 
 

@@ -12,3 +12,10 @@ captchas/
 geckodriver.log
 *.png
 captcha_threshs
+config.ini
+captchas_solved/
+captcha_out/
+captchas_gathered/
+captchas_solved/
+incorrect_solved/
+captchas_solved_manually/
