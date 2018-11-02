@@ -6,10 +6,10 @@ from selenium.webdriver import ActionChains
 import urllib
 import time
 numCaptchas = 1000
-
+OUT_DIR = "../../data/captchas/"
 if __name__ == '__main__':
     # sign_in_link="https://www.amazon.com/ap/signin?openid.return_to=https%3A%2F%2Fwww.amazon.com%2F%3Fref_%3Dnav_ya_signin&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.assoc_handle=usflex&openid.mode=checkid_setup&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&&openid.pape.max_auth_age=0"
-    options=Options()
+    options = Options()
     # options.add_argument("--headless")
     driver = webdriver.Chrome(chrome_options=options)
     driver.get("https://www.amazon.com")
@@ -30,7 +30,7 @@ if __name__ == '__main__':
         captcha = driver.find_element_by_id("auth-captcha-image")
         captcha_src = captcha.get_attribute("src")
         urllib.request.urlretrieve(
-            captcha_src, "../../data/captchas/captcha-%s-%i.jpg" % (timestr, i))
+            captcha_src, OUT_DIR+"captcha-%s-%i.jpg" % (timestr, i))
         driver.find_element_by_id("auth-captcha-refresh-link").click()
         time.sleep(1)
         if i % 10 == 0:

@@ -1,6 +1,7 @@
 import cv2
 import pickle
 import os.path
+import os
 import numpy as np
 from imutils import paths
 from sklearn.preprocessing import LabelBinarizer
@@ -8,13 +9,13 @@ from sklearn.model_selection import train_test_split
 from keras.models import Sequential
 from keras.layers.convolutional import Conv2D, MaxPooling2D
 from keras.layers.core import Flatten, Dense
-from helpers import resize_to_fit
+# from helpers import resize_to_fit
 
 
 # LETTER_IMAGES_FOLDER = "extracted_letters"
-TRAIN_FOLDER = "solutions_cleaned"
-MODEL_FILENAME = "captcha_model.hdf5"
-MODEL_LABELS_FILENAME = "model_labels.dat"
+TRAIN_FOLDER = "../data/solution_cleaned/"
+MODEL_FILENAME = "../data/captcha_model.hdf5"
+MODEL_LABELS_FILENAME = "../data/model_labels.dat"
 
 
 # initialize the data and labels
@@ -22,30 +23,25 @@ data = []
 labels = []
 
 # loop over the input images
-for image_file in paths.list_images(TRAIN_FOLDER):
+for image_file in os.listdir(TRAIN_FOLDER):
     # Load the image and convert it to grayscale
-    image = cv2.imread(image_file)
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-    # Resize the letter so it fits in a 20x20 pixel box
-    # image = resize_to_fit(image, 20, 20)
+    image = cv2.imread(TRAIN_FOLDER+image_file, cv2.IMREAD_GRAYSCALE)
 
     # Add a third channel dimension to the image to make Keras happy
     image = np.expand_dims(image, axis=2)
 
     # Grab the name of the letter based on the folder it was in
     # label = image_file.split(os.path.sep)[-2]
-    print(image_file)
-
+    label = image_file.replace('_duplicate', '').replace('.jpg', '')
     # Add the letter image and it's label to our training data
     data.append(image)
-    # labels.append(label)
+    labels.append(label)
 
-exit(1)
+print(data)
 # scale the raw pixel intensities to the range [0, 1] (this improves training)
 data = np.array(data, dtype="float") / 255.0
 labels = np.array(labels)
-
+print(data.shape)
 # Split the training data into separate train and test sets
 (X_train, X_test, Y_train, Y_test) = train_test_split(
     data, labels, test_size=0.25, random_state=0)
@@ -65,7 +61,7 @@ model = Sequential()
 
 # First convolutional layer with max pooling
 model.add(Conv2D(20, (5, 5), padding="same",
-                 input_shape=(20, 20, 1), activation="relu"))
+                 input_shape=(44, 200, 1), activation="relu"))
 model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 
 # Second convolutional layer with max pooling
@@ -74,10 +70,10 @@ model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 
 # Hidden layer with 500 nodes
 model.add(Flatten())
-model.add(Dense(500, activation="relu"))
+model.add(Dense(64000000, activation="relu"))
 
 # Output layer with 32 nodes (one for each possible letter/number we predict)
-model.add(Dense(32, activation="softmax"))
+model.add(Dense(573, activation="softmax"))
 
 # Ask Keras to build the TensorFlow model behind the scenes
 model.compile(loss="categorical_crossentropy",

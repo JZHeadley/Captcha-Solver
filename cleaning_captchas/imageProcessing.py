@@ -7,7 +7,7 @@ from PIL import Image, ImageFilter
 
 count = 1
 numImages = -1
-captcha_dir = "../data/captchas_solved/"
+captcha_dir = "../data/captchas_solved_old/"
 out_dir = "../data/solution_cleaned/"
 
 
@@ -219,7 +219,7 @@ def erosionDilation(img, img_src):
         # Grab the coordinates of the letter in the image
         x, y, w, h = letter_bounding_box
         cv2.rectangle(output, (x - 2, y - 2), (x + w + 4, y + h + 4), 225, 1)
-    if numImages == -1:
+    if numImages != -1:
         plt.subplot(numImages, columns, count)
         plt.imshow(or_img)
         count += 1
@@ -253,6 +253,6 @@ if __name__ == "__main__":
         img = cv2.imread(captcha_dir+img_src, cv2.IMREAD_GRAYSCALE)
         # deletionMethod(img,row_counts,column_counts)
         erosionDilation(img, img_src)
-
-    plt.tight_layout()
-    plt.show()
+    if numImages != -1:
+        plt.tight_layout()
+        plt.show()
