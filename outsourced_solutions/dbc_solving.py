@@ -1,6 +1,7 @@
 import deathbycaptcha
 import configparser
 import os
+
 CAPTCHA_DIR = "captchas_gathered/"
 OUTPUT_DIR = "../../captchas_solved/"
 INCORRECT_DIR = "incorrect_solved/"

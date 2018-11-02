@@ -1,5 +1,5 @@
 import os
-CAPTCHA_DIR = "captchas/"
+CAPTCHA_DIR = "../../captchas_solved/"
 
 
 """

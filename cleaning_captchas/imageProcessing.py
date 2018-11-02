@@ -90,7 +90,7 @@ def contourImage(img, rows_to_delete, cols_to_delete):
 
         # this part here should just black out random flecks of noise that are still left.
         # in general it probably won't get rid of letter chunks but it could
-        if w*h < 15:
+        if w*h < 50:
             rectContours = np.array([[x, y], [x+w, y], [x, y+h], [x+w, y+h]])
             cv2.fillPoly(new_img, pts=[rectContours], color=0)
             continue
@@ -163,12 +163,18 @@ def erosionDilation(img, img_src):
     kernel = np.ones((2, 3), np.uint8)
     erosion_1 = cv2.erode(img, kernel, iterations=1)
     kernel = np.ones((3, 1), np.uint8)
+    
     erosion_2 = cv2.erode(erosion_1, kernel, iterations=1)
-
+    
     kernel = np.ones((2, 2), np.uint8)
     kernel[0][1] = 0
     kernel[1][0] = 0
     dilation = cv2.dilate(erosion_2, kernel, iterations=1)
+
+    kernel = np.ones((2,2), np.uint8)
+    dilation = cv2.erode(dilation, kernel, iterations=1)
+
+
     _, contours, _ = cv2.findContours(
         dilation.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -195,19 +201,19 @@ def erosionDilation(img, img_src):
             continue
         else:
             letter_image_regions.append((x, y, w, h))
-            cv2.drawContours(output, contours, -1, 100, 3)
+            cv2.drawContours(output, contours, -1, 100, 1)
     print(letter_image_regions.__len__())
 
     bounding_boxes = join_inner_boxes(letter_image_regions)
     print(bounding_boxes.__len__())
 
 
-    letter_image_regions = sorted(letter_image_regions, key=lambda x: x[0])
-    for letter_bounding_box in letter_image_regions:
-        # print(letter_bounding_box)
-        # Grab the coordinates of the letter in the image
-        x, y, w, h = letter_bounding_box
-        cv2.rectangle(dilation, (x - 2, y - 2), (x + w + 4, y + h + 4), 200, 1)
+    # letter_image_regions = sorted(letter_image_regions, key=lambda x: x[0])
+    # for letter_bounding_box in letter_image_regions:
+    #     # print(letter_bounding_box)
+    #     # Grab the coordinates of the letter in the image
+    #     x, y, w, h = letter_bounding_box
+    #     cv2.rectangle(dilation, (x - 2, y - 2), (x + w + 4, y + h + 4), 200, 1)
 
     for letter_bounding_box in bounding_boxes:
         # print(letter_bounding_box)
