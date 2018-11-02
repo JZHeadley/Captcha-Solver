@@ -30,7 +30,7 @@ if __name__ == '__main__':
         captcha = driver.find_element_by_id("auth-captcha-image")
         captcha_src = captcha.get_attribute("src")
         urllib.request.urlretrieve(
-            captcha_src, "captchas/captcha-%s-%i.jpg" % (timestr, i))
+            captcha_src, "../../data/captchas/captcha-%s-%i.jpg" % (timestr, i))
         driver.find_element_by_id("auth-captcha-refresh-link").click()
         time.sleep(1)
         if i % 10 == 0:

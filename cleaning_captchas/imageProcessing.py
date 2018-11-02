@@ -6,9 +6,9 @@ from PIL import Image, ImageFilter
 
 
 count = 1
-numImages = 5
-captcha_dir = "captchas/"
-out_dir = "captcha_out/"
+numImages = -1
+captcha_dir = "../data/captchas_solved/"
+out_dir = "../data/solution_cleaned/"
 
 
 def deletionMethod(img, row_counts, column_counts):
@@ -43,20 +43,21 @@ def deletionMethod(img, row_counts, column_counts):
     #     for line in lines:
     #         for x1, y1, x2, y2 in line:
     #             cv2.line(line_img, (x1, y1), (x2, y2), 150, 1)
-    columns = 3
-    cv2.imwrite(out_dir+img_src, cleaned)
-    plt.subplot(5, columns, count)
-    plt.imshow(or_img)
-    count += 1
-    plt.subplot(5, columns, count)
-    plt.imshow(cleaned)
-    count += 1
-    # plt.subplot(5, columns, count)
-    # plt.imshow(canny)
-    # count += 1
-    plt.subplot(5, columns, count)
-    plt.imshow(output)
-    count += 1
+    if numImages == -1:
+        columns = 3
+        cv2.imwrite(out_dir+img_src, cleaned)
+        plt.subplot(5, columns, count)
+        plt.imshow(or_img)
+        count += 1
+        plt.subplot(5, columns, count)
+        plt.imshow(cleaned)
+        count += 1
+        # plt.subplot(5, columns, count)
+        # plt.imshow(canny)
+        # count += 1
+        plt.subplot(5, columns, count)
+        plt.imshow(output)
+        count += 1
 
 
 def contourImage(img, rows_to_delete, cols_to_delete):
@@ -163,17 +164,16 @@ def erosionDilation(img, img_src):
     kernel = np.ones((2, 3), np.uint8)
     erosion_1 = cv2.erode(img, kernel, iterations=1)
     kernel = np.ones((3, 1), np.uint8)
-    
+
     erosion_2 = cv2.erode(erosion_1, kernel, iterations=1)
-    
+
     kernel = np.ones((2, 2), np.uint8)
     kernel[0][1] = 0
     kernel[1][0] = 0
     dilation = cv2.dilate(erosion_2, kernel, iterations=1)
 
-    kernel = np.ones((2,2), np.uint8)
+    kernel = np.ones((2, 2), np.uint8)
     dilation = cv2.erode(dilation, kernel, iterations=1)
-
 
     _, contours, _ = cv2.findContours(
         dilation.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -207,7 +207,6 @@ def erosionDilation(img, img_src):
     bounding_boxes = join_inner_boxes(letter_image_regions)
     print(bounding_boxes.__len__())
 
-
     # letter_image_regions = sorted(letter_image_regions, key=lambda x: x[0])
     # for letter_bounding_box in letter_image_regions:
     #     # print(letter_bounding_box)
@@ -220,25 +219,29 @@ def erosionDilation(img, img_src):
         # Grab the coordinates of the letter in the image
         x, y, w, h = letter_bounding_box
         cv2.rectangle(output, (x - 2, y - 2), (x + w + 4, y + h + 4), 225, 1)
-
-    plt.subplot(numImages, columns, count)
-    plt.imshow(or_img)
-    count += 1
-    plt.subplot(numImages, columns, count)
-    plt.imshow(erosion_2)
-    count += 1
-    # plt.subplot(5, columns, count)
-    # plt.imshow(dilation)
-    # count += 1
-    plt.subplot(numImages, columns, count)
-    plt.imshow(output)
-    count += 1
+    if numImages == -1:
+        plt.subplot(numImages, columns, count)
+        plt.imshow(or_img)
+        count += 1
+        plt.subplot(numImages, columns, count)
+        plt.imshow(erosion_2)
+        count += 1
+        # plt.subplot(5, columns, count)
+        # plt.imshow(dilation)
+        # count += 1
+        plt.subplot(numImages, columns, count)
+        plt.imshow(output)
+        count += 1
 
 
 if __name__ == "__main__":
     images = os.listdir(captcha_dir)
-    # captcha_image_files = images[:numImages]
-    captcha_image_files = np.random.choice(images, size=(numImages,), replace=False)
+    if numImages == -1:
+        captcha_image_files = images
+    else:
+        # captcha_image_files = images[:numImages]
+        captcha_image_files = np.random.choice(
+            images, size=(numImages,), replace=False)
     img = cv2.imread(captcha_dir+captcha_image_files[0], cv2.IMREAD_GRAYSCALE)
     # plt.gray()
 

@@ -5,7 +5,7 @@ In solving these I discovered that there are duplicate captchas given to me
 This script should find all the duplicates so I can keep track of them
 and solve them later
 """
-captcha_dir = "captchas/"
+captcha_dir = "../data/captchas/"
 
 hashes = []
 for file in os.listdir(captcha_dir):

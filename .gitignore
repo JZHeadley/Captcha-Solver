@@ -1,4 +1,3 @@
-tmp/
 __pycache__/
 venv/
 extracted_letters/
@@ -11,6 +10,5 @@ captchas/
 .vscode/
 geckodriver.log
 *.png
-captcha_threshs
 config.ini
 data/

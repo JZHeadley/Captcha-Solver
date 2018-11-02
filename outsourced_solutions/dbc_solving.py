@@ -2,9 +2,9 @@ import deathbycaptcha
 import configparser
 import os
 
-CAPTCHA_DIR = "captchas_gathered/"
-OUTPUT_DIR = "../../captchas_solved/"
-INCORRECT_DIR = "incorrect_solved/"
+CAPTCHA_DIR = "../data/captchas/"
+OUTPUT_DIR = "../data/captchas_solved/"
+INCORRECT_DIR = "../data/incorrect_solved/"
 config = configparser.ConfigParser()
 config.read('config.ini')
 credentials = config['credentials']
@@ -16,21 +16,26 @@ client = deathbycaptcha.SocketClient(username, password)
 captchas = os.listdir(CAPTCHA_DIR)
 balance = client.get_balance()
 print("We can solve", balance, "more captchas")
+bad_chars = ['1', 'l', 'u', 'v', 's', 't', 'i',
+             'j', 'o', 'r', 'q', 'z', 's', '9', 'h', 'k']
 incorrect = []
 while captchas.__len__() > 0 and balance > 0:
+    flag = True
     print(balance)
     to_solve = captchas.pop()
     try:
         captcha = client.decode(CAPTCHA_DIR+to_solve)
         solution = captcha['text']
         print(solution)
-        if 'q' in solution or '1' in solution:
-            incorrect.append(to_solve)
-            print("Reporting incorrect solution")
-            print(to_solve, "was incorrect")
-            client.report(captcha['captcha'])
-            os.rename(CAPTCHA_DIR+to_solve, INCORRECT_DIR+to_solve)
-        else:
+        for bad_char in bad_chars:
+            if bad_char in solution:
+                incorrect.append(to_solve)
+                print("Reporting incorrect solution")
+                print(to_solve, "was incorrect")
+                client.report(captcha['captcha'])
+                os.rename(CAPTCHA_DIR+to_solve, INCORRECT_DIR+to_solve)
+                flag = False
+        if flag:
             output_file = OUTPUT_DIR+solution
             while os.path.isfile(output_file+".jpg"):
                 """
