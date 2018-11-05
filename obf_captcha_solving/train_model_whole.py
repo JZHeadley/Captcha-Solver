@@ -37,8 +37,9 @@ for image_file in os.listdir(TRAIN_FOLDER):
     data.append(image)
     labels.append(label)
 
-print(data)
 # scale the raw pixel intensities to the range [0, 1] (this improves training)
+data=np.array(data)
+print(data.shape)
 data = np.array(data, dtype="float") / 255.0
 labels = np.array(labels)
 print(data.shape)
@@ -60,20 +61,19 @@ with open(MODEL_LABELS_FILENAME, "wb") as f:
 model = Sequential()
 
 # First convolutional layer with max pooling
-model.add(Conv2D(20, (5, 5), padding="same",
-                 input_shape=(44, 200, 1), activation="relu"))
-model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+model.add(Conv2D(20, (5, 5), padding="same",input_shape=(44, 200, 1), activation="relu"))
+model.add(MaxPooling2D(pool_size=(30, 30), strides=(2, 2)))
 
 # Second convolutional layer with max pooling
 model.add(Conv2D(50, (5, 5), padding="same", activation="relu"))
-model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+model.add(MaxPooling2D(pool_size=(30,30), strides=(2, 2)))
 
 # Hidden layer with 500 nodes
 model.add(Flatten())
-model.add(Dense(64000000, activation="relu"))
+model.add(Dense(500, activation="relu"))
 
 # Output layer with 32 nodes (one for each possible letter/number we predict)
-model.add(Dense(573, activation="softmax"))
+model.add(Dense(1350, activation="softmax"))
 
 # Ask Keras to build the TensorFlow model behind the scenes
 model.compile(loss="categorical_crossentropy",
