@@ -24,8 +24,7 @@ int main(int argc, char *argv[])
 	compression_params.push_back(95);
 	for (int i = 0; i < images.size(); i++)
 	{
-
-		threshold(images[0], thresh, 125, 255, THRESH_BINARY_INV);
+		threshold(images[i], thresh, 125, 255, THRESH_BINARY_INV);
 		medianBlur(thresh, blur, 3);
 		Mat kernel = getStructuringElement(MORPH_RECT, Size(2, 3));
 		erode(blur, erosion_1, kernel);

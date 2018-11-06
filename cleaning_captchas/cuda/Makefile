@@ -8,7 +8,7 @@ DEPS=support.h
 all: imageProcessing-threaded imageProcessing-sequential
 
 imageProcessing-threaded: ImageProcessing-threaded.cpp support.o
-	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
+	$(CC) -pthread $(CFLAGS) $^ -o $@ $(LIBS) 
 
 imageProcessing-sequential: ImageProcessing-sequential.cpp support.o
 	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
