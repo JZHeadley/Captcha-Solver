@@ -136,24 +136,18 @@ def erosionDilation(img, img_src):
 
 
 if __name__ == "__main__":
+    start_time = time.time()
     images = os.listdir(captcha_dir)
-    start_time=time.time()
     if numImages == -1:
         captcha_image_files = images
     else:
-        # captcha_image_files = images[:numImages]
         captcha_image_files = np.random.choice(
             images, size=(numImages,), replace=False)
-    img = cv2.imread(captcha_dir+captcha_image_files[0], cv2.IMREAD_GRAYSCALE)
     # plt.gray()
 
-    row_counts = np.zeros(img.shape[0]-20).reshape(img.shape[0]-20, 1)
-    column_counts = np.zeros(img.shape[1]).reshape(img.shape[1], 1)
-
     for img_src in captcha_image_files:
-        # print(img_src)
+        # print(img_src)q
         img = cv2.imread(captcha_dir+img_src, cv2.IMREAD_GRAYSCALE)
-        # deletionMethod(img,row_counts,column_counts)
         erosionDilation(img, img_src)
     if numImages != -1:
         plt.tight_layout()

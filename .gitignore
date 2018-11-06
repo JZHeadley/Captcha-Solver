@@ -12,3 +12,4 @@ geckodriver.log
 *.png
 config.ini
 data/
+.ptp-sync-folder
