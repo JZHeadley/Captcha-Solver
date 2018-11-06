@@ -13,3 +13,7 @@ geckodriver.log
 config.ini
 data/
 .ptp-sync-folder
+imageProcessing-sequential
+imageProcessing-threaded
+data.tar.bz2
+*.o

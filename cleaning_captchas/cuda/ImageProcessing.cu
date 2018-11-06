@@ -19,12 +19,14 @@
 using namespace cv;
 using namespace std;
 #define NUM_STREAMS 100
+
 inline bool exists(const char *fileName)
 {
 	std::ifstream infile(fileName);
 	return infile.good() && infile.peek() == std::ifstream::traits_type::eof();
 }
-vector<string> get_files(const string path)
+
+vector<string> getFiles(const string path)
 {
 	vector<string> files;
 	struct dirent *entry;
@@ -74,7 +76,7 @@ int main(int argc, char* argv[])
 
 	time_t t;
 	srand((unsigned) time(&t));
-	vector<string> files = get_files("/home/headleyjz/captcha_data/captchas");
+	vector<string> files = getFiles("/home/headleyjz/captcha_data/captchas");
 	Mat::setDefaultAllocator(cuda::HostMem::getAllocator());
 	vector<Mat> h_images = getImages(files);
 

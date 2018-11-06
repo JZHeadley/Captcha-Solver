@@ -2,12 +2,10 @@ import cv2
 import os
 import numpy as np
 from matplotlib import pyplot as plt
-from PIL import Image, ImageFilter
-import time
 import datetime
 
 count = 1
-numImages = -1
+numImages = 5 # -1
 captcha_dir = "../data/captchas_solved/"
 out_dir = "../data/solution_cleaned/"
 
