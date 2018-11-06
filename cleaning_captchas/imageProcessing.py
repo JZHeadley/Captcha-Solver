@@ -4,6 +4,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from PIL import Image, ImageFilter
 import time
+import datetime
 
 count = 1
 numImages = -1
@@ -136,7 +137,7 @@ def erosionDilation(img, img_src):
 
 
 if __name__ == "__main__":
-    start_time = time.time()
+    start_time = datetime.datetime.now()
     images = os.listdir(captcha_dir)
     if numImages == -1:
         captcha_image_files = images
@@ -146,10 +147,11 @@ if __name__ == "__main__":
     # plt.gray()
 
     for img_src in captcha_image_files:
-        # print(img_src)q
+        # print(img_src)
         img = cv2.imread(captcha_dir+img_src, cv2.IMREAD_GRAYSCALE)
         erosionDilation(img, img_src)
     if numImages != -1:
         plt.tight_layout()
         plt.show()
-    print("--- %s seconds ---" % (time.time() - start_time))
+    print("The image processing for % i images required % s milliseconds CPU time." %
+          (images.__len__(), (datetime.datetime.now() - start_time).total_seconds()*1000))
