@@ -1,84 +1,21 @@
 #include <stdio.h>
-#include <dirent.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <vector>
-#include <string>
-#include <iostream>
-#include <fstream>
-
-#include <opencv2/core/core.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/cudaimgproc.hpp>
 #include <opencv2/cudafilters.hpp>
 #include <opencv2/cudaarithm.hpp>
 #include <opencv2/core/cvstd.hpp>
 
-using namespace cv;
-using namespace std;
+#include "support.h"
+
 #define NUM_STREAMS 100
-
-inline bool exists(const char *fileName)
-{
-	std::ifstream infile(fileName);
-	return infile.good() && infile.peek() == std::ifstream::traits_type::eof();
-}
-
-vector<string> getFiles(const string path)
-{
-	vector<string> files;
-	struct dirent *entry;
-	DIR *dir = opendir(path.c_str());
-	if (dir == NULL)
-	{
-		printf("Nothing in that directory\n");
-		return files;
-	}
-
-	string filepath;
-	struct stat filestat;
-
-	while ((entry = readdir(dir)) != NULL)
-	{
-		filepath = path + "/" + entry->d_name;
-		if (stat(filepath.c_str(), &filestat))
-			continue;
-		if (S_ISDIR(filestat.st_mode))
-			continue;
-		files.push_back(filepath);
-	}
-	return files;
-}
-vector<Mat> getImages(vector<string> files)
-{
-	vector<Mat> images;
-	int count = 0;
-	for (int i = 0; i < files.size(); i++)
-	{
-//		printf("%s\n", files[i].c_str());
-		Mat image = imread(files[i], IMREAD_GRAYSCALE);
-		if (image.empty())
-		{
-			printf("Empty image?\n");
-			continue;
-		}
-		image.resize(50);
-		images.push_back(image);
-		count++;
-	}
-	return images;
-}
 
 int main(int argc, char* argv[])
 {
 
 	time_t t;
 	srand((unsigned) time(&t));
-	vector<string> files = getFiles("/home/headleyjz/captcha_data/captchas");
+	string baseDir = "/home/headleyjz/captcha_data/captchas";
+	vector<string> files = getFiles(baseDir);
 	Mat::setDefaultAllocator(cuda::HostMem::getAllocator());
-	vector<Mat> h_images = getImages(files);
+	vector<Mat> h_images = getImages(baseDir, files);
 
 	cudaEvent_t start, stop;
 	cudaEventCreate(&start);

@@ -2,9 +2,7 @@
 
 #include "support.h"
 
-// #define MIN(a, b) (((a) < (b)) ? (a) : (b))
-
-#define NUM_THREADS 100
+#define NUM_THREADS 256
 
 vector<string> files;
 vector<Mat> images;
@@ -38,13 +36,13 @@ void *processImages(void *args)
 	}
 	return NULL;
 }
+
 int main(int argc, char *argv[])
 {
 	struct timespec start, end;
 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 	if (argc == 3)
 	{
-		printf("got directory arguments\n");
 		baseDir = argv[1];
 		outDir = argv[2];
 	}
@@ -57,7 +55,7 @@ int main(int argc, char *argv[])
 	int *threadIds = (int *)malloc(NUM_THREADS * sizeof(int));
 	for (int i = 0; i < NUM_THREADS; i++)
 		threadIds[i] = i;
-	printf("we have %i images to process\n",images.size());
+
 	for (int i = 0; i < NUM_THREADS; i++)
 	{
 		int status = pthread_create(&threads[i], NULL, processImages, (void *)threadIds[i]);
@@ -69,8 +67,8 @@ int main(int argc, char *argv[])
 	}
 	clock_gettime(CLOCK_MONOTONIC_RAW, &end);
 	uint64_t diff = (1000000000L * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec) / 1e6;
-	// free(threads);
-	// free(threadIds);
+	free(threads);
+	free(threadIds);
 	printf("The image processing for %lu images required %llu ms CPU time.\n", images.size(), (long long unsigned int)diff);
 
 	return 0;

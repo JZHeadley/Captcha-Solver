@@ -5,7 +5,7 @@ import glob
 import imutils
 
 
-CAPTCHA_IMAGE_FOLDER = "captchas_solved"
+CAPTCHA_IMAGE_FOLDER = "../../data/solution_cleaned"
 OUTPUT_FOLDER = "extracted_letters"
 
 
@@ -60,8 +60,8 @@ for (i, captcha_image_file) in enumerate(captcha_image_files):
 
     # If we found more or less than 4 letters in the captcha, our letter extraction
     # didn't work correcly. Skip the image instead of saving bad training data!
-    # if len(letter_image_regions) != numChars:
-    #     continue
+    if len(letter_image_regions) != 6:
+        continue
 
     # Sort the detected letter images based on the x coordinate to make sure
     # we are processing them from left-to-right so we match the right image
