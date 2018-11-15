@@ -17,3 +17,4 @@ imageProcessing-sequential
 imageProcessing-threaded
 data.tar.bz2
 *.o
+out/
