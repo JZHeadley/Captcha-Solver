@@ -82,8 +82,8 @@ model.add(Dense(20, activation="softmax"))
 model.compile(loss="categorical_crossentropy",
               optimizer="adam", metrics=["accuracy"])
 numEpochs = 100
-tbCallBack = keras.callbacks.TensorBoard(log_dir='./logs/train/numDense'+numDenseNodes +
-                                         "/numEpochs"+numEpochs, histogram_freq=10, write_graph=True, write_images=True)
+tbCallBack = keras.callbacks.TensorBoard(log_dir="./logs/train/numDense" + str(numDenseNodes) +
+                                         "/numEpochs"+str(numEpochs), histogram_freq=10, write_graph=True, write_images=True)
 
 # Train the neural network
 model.fit(X_train, Y_train,
