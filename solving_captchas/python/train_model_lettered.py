@@ -10,7 +10,7 @@ from keras.layers.convolutional import Conv2D, MaxPooling2D
 from keras.layers.core import Flatten, Dense
 from helpers import resize_to_fit
 import itertools
-import keras.callbacks 
+import keras.callbacks
 
 
 LETTER_IMAGES_FOLDER = "../../cleaning_captchas/python/extracted_letters"
@@ -70,9 +70,10 @@ model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 model.add(Conv2D(50, (5, 5), padding="same", activation="relu"))
 model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 
+numDenseNodes = 500
 # Hidden layer with 500 nodes
 model.add(Flatten())
-model.add(Dense(500, activation="relu"))
+model.add(Dense(numDenseNodes, activation="relu"))
 
 # Output layer with 20 nodes (one for each possible letter/number we predict)
 model.add(Dense(20, activation="softmax"))
@@ -80,13 +81,15 @@ model.add(Dense(20, activation="softmax"))
 # Ask Keras to build the TensorFlow model behind the scenes
 model.compile(loss="categorical_crossentropy",
               optimizer="adam", metrics=["accuracy"])
-tbCallBack = keras.callbacks.TensorBoard(log_dir='./logs/train/run_1', histogram_freq=0, write_graph=True, write_images=True)
+numEpochs = 100
+tbCallBack = keras.callbacks.TensorBoard(log_dir='./logs/train/numDense'+numDenseNodes +
+                                         "/numEpochs"+numEpochs, histogram_freq=10, write_graph=True, write_images=True)
 
 # Train the neural network
 model.fit(X_train, Y_train,
           validation_data=(X_test, Y_test),
           callbacks=[tbCallBack],
-          batch_size=32, epochs=10, verbose=1)
+          batch_size=32, epochs=numEpochs, verbose=1)
 
 # Save the trained model to disk
 model.save(MODEL_FILENAME)
