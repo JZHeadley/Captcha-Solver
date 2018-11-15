@@ -1,17 +1,33 @@
+from sklearn.metrics import accuracy_score
+import pickle
 import cv2
-import os
+import imutils
 import numpy as np
-from matplotlib import pyplot as plt
-import datetime
+from imutils import paths
+from helpers import resize_to_fit
+from keras.models import load_model
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-count = 1
-numImages = -1
-# numImages = 5
-OUTPUT_FOLDER = "./extracted_letters/"
-captcha_dir = "../../data/captchas_solved/"
-out_dir = "./out/"
+
+MODEL_FILENAME = "captcha_model.hdf5"
+MODEL_LABELS_FILENAME = "model_labels.dat"
+CAPTCHA_IMAGE_FOLDER = "../../data/captchas_solved/"
 correctSeparations = 0
-counts = {}
+numChars = 6
+true_values = []
+
+
+def flatten_string_lists(string_list1, string_list2):
+    output1 = []
+    output2 = []
+    for i in range(0, len(string_list1)):
+        if len(string_list1[i]) != len(string_list2[i]):
+            continue
+        for j in range(0, len(string_list1[i])):
+            output1.append(string_list1[i][j])
+            output2.append(string_list2[i][j])
+    return output1, output2
 
 
 def union(a, b):
@@ -62,50 +78,6 @@ def join_inner_boxes(letter_image_regions):
     return bounding_boxes
 
 
-def writeOutLetters(image, letter_image_regions, captcha_correct_text):
-    captcha_correct_text = captcha_correct_text.replace(
-        '.jpg', '').replace('_duplicate', '')
-    # Save out each letter as a single image
-    for letter_bounding_box, letter_text in zip(letter_image_regions, captcha_correct_text):
-        # Grab the coordinates of the letter in the image
-        x, y, w, h = letter_bounding_box
-
-        # Extract the letter from the original image with a 2-pixel margin around the edge
-        letter_image = image[y:y + h, x:x + w]
-
-        # Get the folder to save the image in
-        save_path = os.path.join(OUTPUT_FOLDER, letter_text)
-
-        # if the output directory does not exist, create it
-        if not os.path.exists(save_path):
-            print("making the directory for extracted letters")
-            os.makedirs(save_path)
-
-        # write the letter image to a file
-        count = counts.get(letter_text, 1)
-        p = os.path.join(save_path, "{}.png".format(str(count).zfill(6)))
-        cv2.imwrite(p, letter_image)
-
-        letter_image = np.expand_dims(letter_image, axis=2)
-        letter_image = np.expand_dims(letter_image, axis=3)
-        # from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
-        # i=0
-        # datagen = ImageDataGenerator(
-        #         rotation_range=40,
-        #         width_shift_range=0.2,
-        #         height_shift_range=0.2,
-        #         shear_range=0.2,
-        #         zoom_range=0.2,
-        #         horizontal_flip=True,
-        #         fill_mode='nearest')
-        # for batch in datagen.flow(letter_image,batch_size=1,save_to_dir=save_path,save_prefix="blah",save_format='png'):
-        #     i+=1
-        #     if i > 20:
-        #         break
-        # # increment the count for the current key
-        counts[letter_text] = count + 1
-
-
 def erosionDilation(img, img_src):
     global count, numImages, out_dir, correctSeparations
 
@@ -148,11 +120,11 @@ def erosionDilation(img, img_src):
 
     _, contours, _ = cv2.findContours(
         img2.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
     _, output = cv2.threshold(img2, 125, 255, cv2.THRESH_BINARY_INV)
 
     letter_image_regions = []
 
-    cv2.imwrite(out_dir+img_src, output)
     _, output = cv2.threshold(output, 125, 255, cv2.THRESH_BINARY_INV)
     output = np.zeros(output.shape, np.uint8)
     for contour in contours:
@@ -184,66 +156,104 @@ def erosionDilation(img, img_src):
     cv2.drawContours(output, contours, -1, 156, 0)
     # cv2.fillPoly(output, pts=[np.array(contours),np.uint8], color=255)
 
-    # print(letter_image_regions.__len__())
-
     bounding_boxes = join_inner_boxes(letter_image_regions)
-    # print(bounding_boxes.__len__())
 
     letter_image_regions = sorted(letter_image_regions, key=lambda x: x[0])
     for letter_bounding_box in letter_image_regions:
-        # print(letter_bounding_box)
         # Grab the coordinates of the letter in the image
         x, y, w, h = letter_bounding_box
         # cv2.rectangle(output, (x - 2, y - 2), (x + w + 4, y + h + 4), 225, 1)
         cv2.rectangle(output, (x, y), (x + w, y + h), 225, 1)
 
     if bounding_boxes.__len__() == 6:
+        true_values.append(img_src.replace(
+            CAPTCHA_IMAGE_FOLDER, "").replace(".jpg", "").replace("_duplicate", ""))
         correctSeparations += 1
-        writeOutLetters(output, letter_image_regions, img_src)
-
-    if numImages != -1:
-        plt.subplot(numImages, columns, count)
-        plt.imshow(or_img)
-        count += 1
-        plt.subplot(numImages, columns, count)
-        plt.imshow(img2)
-        count += 1
-        # plt.subplot(5, columns, count)
-        # plt.imshow(dilation)
-        # count += 1
-        plt.subplot(numImages, columns, count)
-        plt.imshow(output)
-        count += 1
+    return bounding_boxes
 
 
-def count_letter_samples(extracted_dir):
-    letter_counts = dict()
-    for dir in os.listdir(extracted_dir):
-        letter_counts[dir] = len(os.listdir(os.path.join(extracted_dir, dir)))
+# Load up the model labels (so we can translate model predictions to actual letters)
+with open(MODEL_LABELS_FILENAME, "rb") as f:
+    lb = pickle.load(f)
 
-    for letter in sorted(letter_counts.keys()):
-        print("We have", letter_counts[letter], "instances of", letter)
+# Load the trained neural network
+model = load_model(MODEL_FILENAME)
+# Grab some random CAPTCHA images to test against.
+# In the real world, you'd replace this section with code to grab a real
+# CAPTCHA image from a live website.
+captcha_image_files = list(paths.list_images(CAPTCHA_IMAGE_FOLDER))
+# captcha_image_files = np.random.choice(captcha_image_files, size=(10,), replace=False)
+final_predictions = []
 
+# loop over the image paths
+for image_file in captcha_image_files:
+    # print(image_file)
+    # Load the image and convert it to grayscale
+    image = cv2.imread(image_file, cv2.IMREAD_GRAYSCALE)
 
-if __name__ == "__main__":
-    start_time = datetime.datetime.now()
-    images = os.listdir(captcha_dir)
-    if numImages == -1:
-        captcha_image_files = images
-    else:
-        captcha_image_files = np.random.choice(
-            images, size=(numImages,), replace=False)
-    # plt.gray()
+    # Add some extra padding around the image
+    image = cv2.copyMakeBorder(image, 50, 50, 50, 50, cv2.BORDER_REPLICATE)
 
-    for img_src in captcha_image_files:
-        # print(img_src)
-        img = cv2.imread(captcha_dir+img_src, cv2.IMREAD_GRAYSCALE)
-        erosionDilation(img, img_src)
-    end = datetime.datetime.now()
-    if numImages != -1:
-        plt.tight_layout()
-        plt.show()
-    count_letter_samples(OUTPUT_FOLDER)
-    print("We had ", correctSeparations, "correct separations")
-    print("The image processing for % i images required % s milliseconds CPU time." %
-          (images.__len__(), (end - start_time).total_seconds()*1000))
+    letter_image_regions = erosionDilation(image, image_file)
+    if len(letter_image_regions) != numChars:
+        continue
+
+    # Sort the detected letter images based on the x coordinate to make sure
+    # we are processing them from left-to-right so we match the right image
+    # with the right letter
+    letter_image_regions = sorted(letter_image_regions, key=lambda x: x[0])
+
+    # Create an output image and a list to hold our predicted letters
+    output = cv2.merge([image] * 3)
+    predictions = []
+
+    # loop over the letters
+    for letter_bounding_box in letter_image_regions:
+        # Grab the coordinates of the letter in the image
+        x, y, w, h = letter_bounding_box
+
+        # Extract the letter from the original image with a 2-pixel margin around the edge
+        letter_image = image[y - 2:y + h + 2, x - 2:x + w + 2]
+
+        # Re-size the letter image to 20x20 pixels to match training data
+        try:
+            letter_image = resize_to_fit(letter_image, 50, 50)
+            pass
+        except Exception:
+            continue
+
+        # Turn the single image into a 4d list of images to make Keras happy
+        letter_image = np.expand_dims(letter_image, axis=2)
+        letter_image = np.expand_dims(letter_image, axis=0)
+
+        # Ask the neural network to make a prediction
+        prediction = model.predict(letter_image)
+
+        # Convert the one-hot-encoded prediction back to a normal letter
+        letter = lb.inverse_transform(prediction)[0]
+        predictions.append(letter)
+
+        # draw the prediction on the output image
+        cv2.rectangle(output, (x - 2, y - 2),
+                      (x + w + 4, y + h + 4), (0, 255, 0), 1)
+        cv2.putText(output, letter, (x - 5, y - 5),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 0), 2)
+
+    # Print the captcha's text
+    captcha_text = "".join(predictions)
+    print("CAPTCHA text is: {}".format(captcha_text))
+    final_predictions.append(captcha_text)
+    # Show the annotated image
+    # cv2.imshow("Output", output)
+    # cv2.waitKey()
+
+print(true_values)
+print(final_predictions)
+print("We had ", correctSeparations, "correct separations")
+print("We're predicting captchas with ", round(accuracy_score(
+    true_values, final_predictions), 4)*100, "% accuracy")
+
+true_letters, predicted_letters = flatten_string_lists(
+    true_values, final_predictions)
+print("We're predicting individual characters with ", round(accuracy_score(
+    true_letters, predicted_letters), 4)*100, "% accuracy")
