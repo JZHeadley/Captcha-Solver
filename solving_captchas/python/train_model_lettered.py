@@ -81,9 +81,9 @@ model.add(Dense(20, activation="softmax"))
 # Ask Keras to build the TensorFlow model behind the scenes
 model.compile(loss="categorical_crossentropy",
               optimizer="adam", metrics=["accuracy"])
-numEpochs = 100
+numEpochs = 10
 tbCallBack = keras.callbacks.TensorBoard(log_dir="./logs/train/numDense" + str(numDenseNodes) +
-                                         "/numEpochs"+str(numEpochs), histogram_freq=10, write_graph=True, write_images=True)
+                                         "/numEpochs"+str(numEpochs), histogram_freq=10, write_graph=True, write_images=False)
 
 # Train the neural network
 model.fit(X_train, Y_train,

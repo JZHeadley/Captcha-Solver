@@ -81,8 +81,8 @@ def join_inner_boxes(letter_image_regions):
 def erosionDilation(img, img_src):
     global count, numImages, out_dir, correctSeparations
 
+
     or_img = img
-    columns = 3
     img = img[:-17, :]
     img = np.delete(img, range(1, 10), axis=0)
 
@@ -120,12 +120,10 @@ def erosionDilation(img, img_src):
 
     _, contours, _ = cv2.findContours(
         img2.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
     _, output = cv2.threshold(img2, 125, 255, cv2.THRESH_BINARY_INV)
 
     letter_image_regions = []
 
-    _, output = cv2.threshold(output, 125, 255, cv2.THRESH_BINARY_INV)
     output = np.zeros(output.shape, np.uint8)
     for contour in contours:
         # Get the rectangle that contains the contour
@@ -142,7 +140,8 @@ def erosionDilation(img, img_src):
             # Split it in half into two letter regions!
             half_width = int(w / 2)
             if half_width*h < 200:
-                rectContours = np.array([[x, y], [x+w, y], [x, y+h], [x+w, y+h]])
+                rectContours = np.array(
+                    [[x, y], [x+w, y], [x, y+h], [x+w, y+h]])
                 cv2.fillPoly(output, pts=[rectContours], color=0)
                 continue
             letter_image_regions.append((x, y, half_width, h))
@@ -165,6 +164,7 @@ def erosionDilation(img, img_src):
         # cv2.rectangle(output, (x - 2, y - 2), (x + w + 4, y + h + 4), 225, 1)
         cv2.rectangle(output, (x, y), (x + w, y + h), 225, 1)
 
+    # bounding_boxes= sorted(bounding_boxes, key=lambda x: x[0])
     if bounding_boxes.__len__() == 6:
         true_values.append(img_src.replace(
             CAPTCHA_IMAGE_FOLDER, "").replace(".jpg", "").replace("_duplicate", ""))

@@ -6,7 +6,7 @@ import datetime
 
 count = 1
 numImages = -1
-# numImages = 5
+numImages = 5
 OUTPUT_FOLDER = "./extracted_letters/"
 captcha_dir = "../../data/captchas_solved/"
 out_dir = "./out/"
