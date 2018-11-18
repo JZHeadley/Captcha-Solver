@@ -47,6 +47,7 @@ while captchas.__len__() > 0 and balance > 0:
                 output_file = output_file+"_duplicate"
             os.rename(CAPTCHA_DIR+to_solve, output_file + ".jpg")
     except deathbycaptcha.AccessDeniedException:
+        exit(1)
         print("Access error occured")
     balance = client.get_balance()
 print(incorrect)
