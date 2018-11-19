@@ -22,4 +22,6 @@ vector<string> getFiles(const string path);
 
 vector<Mat> getImages(string baseDir, vector<string> files);
 
+void replaceString(string &subject, const string &search, const string &replace);
+
 #endif

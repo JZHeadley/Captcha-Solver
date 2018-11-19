@@ -46,7 +46,7 @@ labels = np.array(labels)
 
 # Split the training data into separate train and test sets
 (X_train, X_test, Y_train, Y_test) = train_test_split(
-    data, labels, test_size=0.4, random_state=0)
+    data, labels, test_size=0.1, random_state=0)
 
 # Convert the labels (letters) into one-hot encodings that Keras can work with
 lb = LabelBinarizer().fit(Y_train)
@@ -74,6 +74,8 @@ numDenseNodes = 500
 # Hidden layer with 500 nodes
 model.add(Flatten())
 model.add(Dense(numDenseNodes, activation="relu"))
+# {'Activation_1': 0, 'Activation_2': 1, 'Dense': 0, 'Activation': 0,
+#     'batch_size': 1, 'epochs': 3, 'validation_split': 0}
 
 # Output layer with 20 nodes (one for each possible letter/number we predict)
 model.add(Dense(20, activation="softmax"))
@@ -88,7 +90,7 @@ tbCallBack = keras.callbacks.TensorBoard(log_dir="./logs/train/numDense" + str(n
 # Train the neural network
 model.fit(X_train, Y_train,
           validation_data=(X_test, Y_test),
-          callbacks=[tbCallBack],
+        #   callbacks=[tbCallBack],
           batch_size=32, epochs=numEpochs, verbose=1)
 
 # Save the trained model to disk

@@ -88,21 +88,7 @@ def writeOutLetters(image, letter_image_regions, captcha_correct_text):
 
         letter_image = np.expand_dims(letter_image, axis=2)
         letter_image = np.expand_dims(letter_image, axis=3)
-        # from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
-        # i=0
-        # datagen = ImageDataGenerator(
-        #         rotation_range=40,
-        #         width_shift_range=0.2,
-        #         height_shift_range=0.2,
-        #         shear_range=0.2,
-        #         zoom_range=0.2,
-        #         horizontal_flip=True,
-        #         fill_mode='nearest')
-        # for batch in datagen.flow(letter_image,batch_size=1,save_to_dir=save_path,save_prefix="blah",save_format='png'):
-        #     i+=1
-        #     if i > 20:
-        #         break
-        # # increment the count for the current key
+        # increment the count for the current key
         counts[letter_text] = count + 1
 
 
@@ -112,7 +98,7 @@ def erosionDilation(img, img_src):
     or_img = img
     columns = 3
     img = img[:-17, :]
-    img = np.delete(img, range(1, 10), axis=0)
+    # img = np.delete(img, range(1, 10), axis=0)
 
     _, img = cv2.threshold(img, 125, 255, cv2.THRESH_BINARY_INV)
 
@@ -165,12 +151,13 @@ def erosionDilation(img, img_src):
             rectContours = np.array([[x, y], [x+w, y], [x, y+h], [x+w, y+h]])
             cv2.fillPoly(output, pts=[rectContours], color=0)
             continue
-        if w / h > 1.5 or w*h > 2000:
+        if w*h > 2000 or w / h > 1.5:
             # This contour is too wide to be a single letter!
             # Split it in half into two letter regions!
             half_width = int(w / 2)
             if half_width*h < 200:
-                rectContours = np.array([[x, y], [x+w, y], [x, y+h], [x+w, y+h]])
+                rectContours = np.array(
+                    [[x, y], [x+w, y], [x, y+h], [x+w, y+h]])
                 cv2.fillPoly(output, pts=[rectContours], color=0)
                 continue
             letter_image_regions.append((x, y, half_width, h))

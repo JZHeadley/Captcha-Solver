@@ -21,6 +21,16 @@ inline bool exists(const char *fileName)
     return infile.good() && infile.peek() == std::ifstream::traits_type::eof();
 }
 
+void replaceString(string &subject, const string &search, const string &replace)
+{
+    size_t pos = 0;
+    while ((pos = subject.find(search, pos)) != std::string::npos)
+    {
+        subject.replace(pos, search.length(), replace);
+        pos += replace.length();
+    }
+}
+
 vector<string> getFiles(const string path)
 {
     vector<string> filesOut;
