@@ -6,95 +6,39 @@
 #define NUM_THREADS 256
 #define NUM_ROWS_FROM_BOTTOM 17
 #define NUM_ROWS_FROM_TOP 10
+#define EXTRACTED_LETTER_DIR "extracted_letters/"
 
 vector<string> files;
 vector<Mat> images;
 string baseDir = "/home/headleyjz/captcha_data/captchas_solved/";
 string outDir = "/home/headleyjz/captcha_data/solution_cleaned/";
+
 vector<Mat> processed;
 vector<int> compression_params;
 int correctSeparations = 0;
+int charCounts[256] = {0};
 
-bool compareRects(Rect l, Rect r)
-{
-	if (l.y == r.y)
-		return l.x < r.x;
-	return (l.y < r.y);
-}
-
-Rect rectUnion(Rect a, Rect b)
-{
-	Rect output;
-	output.x = min(a.x, b.x);
-	output.y = min(a.y, b.y);
-	output.width = max(a.x + a.width, b.x + b.width);
-	output.height = max(a.y + a.height, b.y + b.height);
-	return output;
-}
-
-Rect rectIntersection(Rect a, Rect b)
-{
-	Rect output;
-	output.x = max(a.x, b.x);
-	output.y = max(a.y, b.y);
-	output.width = min(a.x + a.width, b.x + b.width) - output.x;
-	output.height = min(a.y + a.height, b.y + b.height) - output.y;
-	if (output.width < 0 || output.height < 0)
-		return Rect(0, 0, 0, 0);
-	return output;
-}
-
-vector<Rect> joinBoundingBoxes(vector<Rect> letterImageRegions, int maxRows, int maxCols)
-{
-	vector<Rect> boundingBoxes;
-	Rect temp1, temp2, intersection;
-	bool flag = false;
-	for (int i = 0; i < letterImageRegions.size(); i++)
-	{
-		temp1 = Rect(max(0, letterImageRegions[i].x - 2),
-					 max(0, letterImageRegions[i].y - 25),
-					 min(maxCols, letterImageRegions[i].width + 2),
-					 min(maxRows, letterImageRegions[i].y + letterImageRegions[i].height + 25));
-		for (int j = 0; j < letterImageRegions.size(); j++)
-		{
-			if (i == j)
-				continue;
-			temp2 = Rect(max(0, letterImageRegions[j].x - 2),
-						 max(0, letterImageRegions[j].y - 25),
-						 min(maxCols, letterImageRegions[j].width + 2),
-						 min(maxRows, letterImageRegions[j].y + letterImageRegions[j].height + 25));
-			intersection = rectIntersection(temp1, temp2);
-			if (intersection.width * intersection.height > 0 && !flag)
-			{
-				flag = true;
-				boundingBoxes.push_back(rectUnion(temp1, temp2));
-				break;
-			}
-		}
-		if (!flag)
-			boundingBoxes.push_back(letterImageRegions[i]);
-	}
-	return boundingBoxes;
-}
+bool compareRects(Rect l, Rect r);
+Rect rectUnion(Rect a, Rect b);
+void createOutDirsIfNotExists(string processedImageDir, string extracted_letter_dir);
+Rect rectIntersection(Rect a, Rect b);
+vector<Rect> joinBoundingBoxes(vector<Rect> letterImageRegions, int maxRows, int maxCols);
 
 void extractLetters(string captchaText, Mat image, vector<Rect> letterBoundingBoxes)
 {
 	Rect letterRegion;
 	Mat letter;
-	for (int i = 0; i < letterBoundingBoxes.size(); i++)
+	string outFile = EXTRACTED_LETTER_DIR;
+	char charDir;
+	for (int i = 0; i < (int)letterBoundingBoxes.size(); i++)
 	{
-		letterRegion = Rect(letterBoundingBoxes[i].x,
-							letterBoundingBoxes[i].y,
-							letterBoundingBoxes[i].width,
-							letterBoundingBoxes[i].height);
-		printf("cols: %i rows: %i\n", image.cols, image.rows);
-		printf("%i %i %i %i\n", letterBoundingBoxes[i].x,
-			   letterBoundingBoxes[i].y,
-			   letterBoundingBoxes[i].width,
-			   letterBoundingBoxes[i].height);
-		letter = image(letterBoundingBoxes[i]);
-		// imshow("blah", letter);
-		// waitKey(0);
+		Range rowRange = Range(letterBoundingBoxes[i].x, letterBoundingBoxes[i].x + letterBoundingBoxes[i].width);
+		Range colRange = Range(letterBoundingBoxes[i].y, letterBoundingBoxes[i].y + letterBoundingBoxes[i].height);
+		letter = Mat(image, colRange, rowRange);
+		charDir = captchaText.at(i);
+		mkdir((outFile + charDir).c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+		imwrite(((string)(outFile + charDir + "/" + to_string(charCounts[charDir]) + ".jpg")).c_str(), letter, compression_params);
+		charCounts[charDir] += 1;
 	}
 	return;
 }
@@ -109,7 +53,7 @@ void findLetters(string fileName, Mat image, vector<int> compression_params)
 	Rect boundingBox;
 	vector<Rect> letterImageRegions;
 	vector<vector<Point>> rectContours;
-	for (int i = 0; i < contours.size(); i++)
+	for (int i = 0; i < (int)contours.size(); i++)
 	{
 		rectContours.clear();
 		boundingBox = boundingRect(contours[i]);
@@ -159,20 +103,20 @@ void findLetters(string fileName, Mat image, vector<int> compression_params)
 	}
 	return;
 }
+
 void *processImages(void *args)
 {
 	int tid = *((int *)(&args));
 	int instancesPerTask = (images.size() + NUM_THREADS) / NUM_THREADS;
 	int beginIndex = tid * instancesPerTask;
 	int endIndex = MIN((tid + 1) * instancesPerTask, images.size());
-	Mat tailed, beheaded, thresh, blurred, erosion_1, erosion_2, dilation, dilation_2, kernel;
+	Mat thresh, blurred, bilateral, erosion_1, erosion_2, dilation, dilation_2, kernel;
 
 	for (int i = beginIndex; i < endIndex; i++)
 	{
-		// tailed = Mat(images[i].rows - NUM_ROWS_FROM_BOTTOM, images[i].cols, CV_8UC1, images[i].data);
-		// beheaded = tailed;
 		threshold(images[i], thresh, 125, 255, THRESH_BINARY_INV);
 		medianBlur(thresh, blurred, 3);
+		bilateralFilter(blurred, bilateral, 4, 75, 75);
 
 		kernel = getStructuringElement(MORPH_RECT, Size(2, 3));
 		erode(blurred, erosion_1, kernel);
@@ -208,6 +152,7 @@ int main(int argc, char *argv[])
 	printf("reading images from %s and writing to %s\n", baseDir.c_str(), outDir.c_str());
 	files = getFiles(baseDir);
 	images = getImages(baseDir, files);
+	createOutDirsIfNotExists(outDir, EXTRACTED_LETTER_DIR);
 	printf("Finished reading in all of the images\n");
 	compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
 	compression_params.push_back(95);
@@ -233,4 +178,72 @@ int main(int argc, char *argv[])
 	printf("The image processing for %lu images required %llu ms CPU time.\n", images.size(), (long long unsigned int)diff);
 
 	return 0;
+}
+
+void createOutDirsIfNotExists(string processedImageDir, string extracted_letter_dir)
+{
+	mkdir(processedImageDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+	mkdir(extracted_letter_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+}
+
+bool compareRects(Rect l, Rect r)
+{
+	if (l.y == r.y)
+		return l.x < r.x;
+	return (l.y < r.y);
+}
+
+Rect rectUnion(Rect a, Rect b)
+{
+	Rect output;
+	output.x = min(a.x, b.x);
+	output.y = min(a.y, b.y);
+	output.width = max(a.width, b.width);
+	output.height = max(a.height, b.height);
+	return output;
+}
+
+Rect rectIntersection(Rect a, Rect b)
+{
+	Rect output;
+	output.x = max(a.x, b.x);
+	output.y = max(a.y, b.y);
+	output.width = min(a.x + a.width, b.x + b.width) - output.x;
+	output.height = min(a.y + a.height, b.y + b.height) - output.y;
+	if (output.width < 0 || output.height < 0)
+		return Rect(0, 0, 0, 0);
+	return output;
+}
+
+vector<Rect> joinBoundingBoxes(vector<Rect> letterImageRegions, int maxRows, int maxCols)
+{
+	vector<Rect> boundingBoxes;
+	Rect temp1, temp2, intersection;
+	bool flag = false;
+	for (int i = 0; i < (int)letterImageRegions.size(); i++)
+	{
+		temp1 = Rect(max(0, letterImageRegions[i].x - 2),
+					 max(0, letterImageRegions[i].y - 25),
+					 min(maxCols, letterImageRegions[i].width + 2),
+					 min(maxRows, letterImageRegions[i].height + 25));
+		for (int j = 0; j < (int)letterImageRegions.size(); j++)
+		{
+			if (i == j)
+				continue;
+			temp2 = Rect(max(0, letterImageRegions[j].x - 2),
+						 max(0, letterImageRegions[j].y - 25),
+						 min(maxCols, letterImageRegions[j].width + 2),
+						 min(maxRows, letterImageRegions[j].height + 25));
+			intersection = rectIntersection(temp1, temp2);
+			if (intersection.width * intersection.height > 0 && !flag)
+			{
+				flag = true;
+				boundingBoxes.push_back(rectUnion(temp1, temp2));
+				break;
+			}
+		}
+		if (!flag)
+			boundingBoxes.push_back(letterImageRegions[i]);
+	}
+	return boundingBoxes;
 }
