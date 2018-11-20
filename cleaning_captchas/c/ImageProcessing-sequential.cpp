@@ -46,8 +46,7 @@ void findLetters(string fileName, Mat image, vector<int> compression_params)
 	Mat canny_output;
 	vector<vector<Point>> contours;
 	vector<Vec4i> hierarchy;
-	Canny(image, canny_output, 100, 200, 3);
-	findContours(canny_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_NONE, Point(0, 0));
+	findContours(image, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_NONE, Point(0, 0));
 	Rect boundingBox;
 	vector<Rect> letterImageRegions;
 	vector<vector<Point>> rectContours;
@@ -80,7 +79,7 @@ void findLetters(string fileName, Mat image, vector<int> compression_params)
 				continue;
 			}
 			letterImageRegions.push_back(Rect(boundingBox.x, boundingBox.y, halfWidth, boundingBox.height));
-			letterImageRegions.push_back(Rect(boundingBox.x + halfWidth, boundingBox.y, boundingBox.x + halfWidth, boundingBox.height));
+			letterImageRegions.push_back(Rect(boundingBox.x + halfWidth, boundingBox.y, halfWidth, boundingBox.height));
 		}
 		else
 		{

@@ -48,8 +48,8 @@ void findLetters(string fileName, Mat image, vector<int> compression_params)
 	Mat canny_output;
 	vector<vector<Point>> contours;
 	vector<Vec4i> hierarchy;
-	Canny(image, canny_output, 100, 200, 3);
-	findContours(canny_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_NONE, Point(0, 0));
+	// Canny(image, canny_output, 100, 200, 3);
+	findContours(image, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_NONE, Point(0, 0));
 	Rect boundingBox;
 	vector<Rect> letterImageRegions;
 	vector<vector<Point>> rectContours;
@@ -82,14 +82,14 @@ void findLetters(string fileName, Mat image, vector<int> compression_params)
 				continue;
 			}
 			letterImageRegions.push_back(Rect(boundingBox.x, boundingBox.y, halfWidth, boundingBox.height));
-			letterImageRegions.push_back(Rect(boundingBox.x + halfWidth, boundingBox.y, boundingBox.x + halfWidth, boundingBox.height));
+			letterImageRegions.push_back(Rect(boundingBox.x + halfWidth, boundingBox.y, halfWidth, boundingBox.height));
 		}
 		else
 		{
 			letterImageRegions.push_back(Rect(boundingBox));
 		}
 	}
-	letterImageRegions = joinBoundingBoxes(letterImageRegions, image.rows - 1, image.cols - 1);
+	letterImageRegions = joinBoundingBoxes(letterImageRegions, image.rows, image.cols);
 	if (letterImageRegions.size() == 6)
 	{
 		correctSeparations++;
@@ -116,7 +116,7 @@ void *processImages(void *args)
 	{
 		threshold(images[i], thresh, 125, 255, THRESH_BINARY_INV);
 		medianBlur(thresh, blurred, 3);
-		bilateralFilter(blurred, bilateral, 4, 75, 75);
+		bilateralFilter(blurred, bilateral, 3, 75, 75);
 
 		kernel = getStructuringElement(MORPH_RECT, Size(2, 3));
 		erode(blurred, erosion_1, kernel);

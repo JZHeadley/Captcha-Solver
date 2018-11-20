@@ -1,6 +1,6 @@
 INCLUDES=-I.
 CC=g++
-CFLAGS=-g -Wall $(INCLUDES)
+CFLAGS=-g -Wall $(INCLUDES) -std=c++11
 LINKARGS=-lopencv_core -lopencv_imgproc -lopencv_imgcodecs 
 LIBS=-lopencv_core -lopencv_imgproc -lopencv_imgcodecs -lopencv_highgui
 DEPS=support.h
