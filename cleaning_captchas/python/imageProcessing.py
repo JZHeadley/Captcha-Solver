@@ -92,7 +92,7 @@ def writeOutLetters(image, letter_image_regions, captcha_correct_text):
         counts[letter_text] = count + 1
 
 
-def erosionDilation(img, img_src):
+def erosionDilation(img):
     global count, numImages, out_dir, correctSeparations
 
     or_img = img
@@ -117,7 +117,9 @@ def erosionDilation(img, img_src):
     dilation = cv2.dilate(erosion_2, kernel, iterations=1)
 
     kernel = np.ones((2, 2), np.uint8)
-    dilation = cv2.erode(dilation, kernel, iterations=1)
+    erosion = cv2.erode(dilation, kernel, iterations=1)
+    # cv2.imshow("asdf",erosion)
+    # cv2.waitKey(0)
 
     # kernel = np.array([
     #     [1, 0, 0, 0, 1],
@@ -130,7 +132,7 @@ def erosionDilation(img, img_src):
     # kernel = np.ones((3, 3), np.uint8)
     # dilation = cv2.dilate(erosion, kernel, iterations=2)
 
-    img2 = dilation
+    img2 = erosion
 
     _, contours, _ = cv2.findContours(
         img2.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -168,12 +170,13 @@ def erosionDilation(img, img_src):
     # draw out the filled contours
     cv2.drawContours(output, contours, -1, 100, cv2.FILLED)
     # draw the contour lines over top of that for visualization purposes
-    cv2.drawContours(output, contours, -1, 156, 0)
+    # cv2.drawContours(output, contours, -1, 156, 0)
     # cv2.fillPoly(output, pts=[np.array(contours),np.uint8], color=255)
 
     # print(letter_image_regions.__len__())
 
     bounding_boxes = join_inner_boxes(letter_image_regions)
+    # bounding_boxes=letter_image_regions
     # print(bounding_boxes.__len__())
 
     letter_image_regions = sorted(letter_image_regions, key=lambda x: x[0])
@@ -186,7 +189,6 @@ def erosionDilation(img, img_src):
 
     if bounding_boxes.__len__() == 6:
         correctSeparations += 1
-        writeOutLetters(output, letter_image_regions, img_src)
 
     if numImages != -1:
         plt.subplot(numImages, columns, count)
@@ -201,6 +203,7 @@ def erosionDilation(img, img_src):
         plt.subplot(numImages, columns, count)
         plt.imshow(output)
         count += 1
+    return output, letter_image_regions
 
 
 def count_letter_samples(extracted_dir):
@@ -221,11 +224,13 @@ if __name__ == "__main__":
         captcha_image_files = np.random.choice(
             images, size=(numImages,), replace=False)
     # plt.gray()
-
+    # captcha_image_files=['../../data/captchas_solved/2anxc5.jpg']
     for img_src in captcha_image_files:
         # print(img_src)
         img = cv2.imread(captcha_dir+img_src, cv2.IMREAD_GRAYSCALE)
-        erosionDilation(img, img_src)
+        output, letter_image_regions = erosionDilation(img)
+        writeOutLetters(output, letter_image_regions, img_src)
+
     end = datetime.datetime.now()
     if numImages != -1:
         plt.tight_layout()

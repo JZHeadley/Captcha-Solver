@@ -1,5 +1,3 @@
-import os
-os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 from keras.models import load_model
 from helpers import resize_to_fit
 from imutils import paths
@@ -9,12 +7,10 @@ import cv2
 import pickle
 from sklearn.metrics import accuracy_score
 
-
 MODEL_FILENAME = "captcha_model.hdf5"
 MODEL_LABELS_FILENAME = "model_labels.dat"
-CAPTCHA_IMAGE_FOLDER = "test"
+CAPTCHA_IMAGE_FOLDER = "../../test"
 
-numChars=7
 
 # Load up the model labels (so we can translate model predictions to actual letters)
 with open(MODEL_LABELS_FILENAME, "rb") as f:
@@ -22,15 +18,18 @@ with open(MODEL_LABELS_FILENAME, "rb") as f:
 
 # Load the trained neural network
 model = load_model(MODEL_FILENAME)
+
 # Grab some random CAPTCHA images to test against.
 # In the real world, you'd replace this section with code to grab a real
 # CAPTCHA image from a live website.
 captcha_image_files = list(paths.list_images(CAPTCHA_IMAGE_FOLDER))
-true_values=[]
+
+labels =[]
+for i in range(0,len(captcha_image_files)):
+    labels.append(captcha_image_files[i].replace(CAPTCHA_IMAGE_FOLDER,"").replace("/","").replace(".png",""))
+predicted_labels = []
 # captcha_image_files = np.random.choice(captcha_image_files, size=(10,), replace=False)
-for i in range(0,captcha_image_files.__len__()):
-    true_values.append(captcha_image_files[i].replace("test/","").replace(".png",""))
-final_predictions=[]
+# print(captcha_image_files)
 # loop over the image paths
 for image_file in captcha_image_files:
     # Load the image and convert it to grayscale
@@ -69,10 +68,10 @@ for image_file in captcha_image_files:
             # This is a normal letter by itself
             letter_image_regions.append((x, y, w, h))
 
-    # # If we found more or less than 4 letters in the captcha, our letter extraction
-    # # didn't work correcly. Skip the image instead of saving bad training data!
-    # if len(letter_image_regions) != numChars:
-    #     continue
+    # If we found more or less than 4 letters in the captcha, our letter extraction
+    # didn't work correcly. Skip the image instead of saving bad training data!
+    # if len(letter_image_regions) != 4:
+        # continue
 
     # Sort the detected letter images based on the x coordinate to make sure
     # we are processing them from left-to-right so we match the right image
@@ -108,12 +107,15 @@ for image_file in captcha_image_files:
         # draw the prediction on the output image
         cv2.rectangle(output, (x - 2, y - 2), (x + w + 4, y + h + 4), (0, 255, 0), 1)
         cv2.putText(output, letter, (x - 5, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 0), 2)
-
+    
     # Print the captcha's text
     captcha_text = "".join(predictions)
     print("CAPTCHA text is: {}".format(captcha_text))
-    final_predictions.append(captcha_text)
+    predicted_labels.append(captcha_text)
+
+    
     # Show the annotated image
-    cv2.imshow("Output", output)
-    cv2.waitKey()
-print("We're predicting captchas with ",accuracy_score(true_values,final_predictions)*100,"% accuracy")
+    # cv2.imshow("Output", output)
+    # cv2.waitKey()
+accuracy=accuracy_score(labels,predicted_labels)
+print(accuracy)

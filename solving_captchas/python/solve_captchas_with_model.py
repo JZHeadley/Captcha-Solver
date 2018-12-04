@@ -81,7 +81,6 @@ def join_inner_boxes(letter_image_regions):
 def erosionDilation(img, img_src):
     global count, numImages, out_dir, correctSeparations
 
-
     or_img = img
     img = img[:-17, :]
     img = np.delete(img, range(1, 10), axis=0)
@@ -217,7 +216,7 @@ for image_file in captcha_image_files:
 
         # Re-size the letter image to 20x20 pixels to match training data
         try:
-            letter_image = resize_to_fit(letter_image, 50, 50)
+            letter_image = resize_to_fit(letter_image, 30, 30)
             pass
         except Exception:
             continue
@@ -241,7 +240,8 @@ for image_file in captcha_image_files:
 
     # Print the captcha's text
     captcha_text = "".join(predictions)
-    print("CAPTCHA text is: {}".format(captcha_text))
+    print("CAPTCHA text is: {} it really is {}".format(
+        captcha_text, image_file.replace(CAPTCHA_IMAGE_FOLDER, "")))
     final_predictions.append(captcha_text)
     # Show the annotated image
     # cv2.imshow("Output", output)

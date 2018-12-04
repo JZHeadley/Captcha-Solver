@@ -2,8 +2,8 @@
 include "really-simple-captcha.php";
 $charWidth = 64;
 $fontSize = $charWidth;
-$numTrain = 1000;
-$numTest = 100;
+$numTrain = 10000;
+$numTest = 10000;
 $imageHeight = 100;
 $trainDir = "../../train";
 $testDir = "../../test";

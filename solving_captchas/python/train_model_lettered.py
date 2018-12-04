@@ -7,13 +7,14 @@ from sklearn.preprocessing import LabelBinarizer
 from sklearn.model_selection import train_test_split
 from keras.models import Sequential
 from keras.layers.convolutional import Conv2D, MaxPooling2D
-from keras.layers.core import Flatten, Dense
+from keras.layers.core import Flatten, Dense, Dropout
 from helpers import resize_to_fit
 import itertools
 import keras.callbacks
 
 
 LETTER_IMAGES_FOLDER = "../../cleaning_captchas/python/extracted_letters"
+# LETTER_IMAGES_FOLDER = "../../cleaning_captchas/c/manually_resorted_letters"
 MODEL_FILENAME = "captcha_model.hdf5"
 MODEL_LABELS_FILENAME = "model_labels.dat"
 
@@ -21,14 +22,14 @@ MODEL_LABELS_FILENAME = "model_labels.dat"
 # initialize the data and labels
 data = []
 labels = []
-numSamplesPerLetter = 276
+numSamplesPerLetter = 70
 for directory in os.listdir(LETTER_IMAGES_FOLDER):
     letter_dir = LETTER_IMAGES_FOLDER + "/" + directory
     for image_file in os.listdir(letter_dir)[numSamplesPerLetter:]:
         # Load the image and convert it to grayscale
         image = cv2.imread(letter_dir + "/" + image_file, cv2.IMREAD_GRAYSCALE)
         # Resize the letter so it fits in a 50x50 pixel box
-        image = resize_to_fit(image, 50, 50)
+        image = resize_to_fit(image, 30, 30)
 
         # Add a third channel dimension to the image to make Keras happy
         image = np.expand_dims(image, axis=2)
@@ -63,22 +64,26 @@ model = Sequential()
 
 # First convolutional layer with max pooling
 model.add(Conv2D(20, (5, 5), padding="same",
-                 input_shape=(50, 50, 1), activation="relu"))
+                 input_shape=(30, 30, 1), activation="relu"))
+model.add(Dropout(.3))
 model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 
 # Second convolutional layer with max pooling
 model.add(Conv2D(50, (5, 5), padding="same", activation="relu"))
+model.add(Dropout(.4))
 model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 
 numDenseNodes = 500
 # Hidden layer with 500 nodes
 model.add(Flatten())
+model.add(Dropout(.3))
 model.add(Dense(numDenseNodes, activation="relu"))
 # {'Activation_1': 0, 'Activation_2': 1, 'Dense': 0, 'Activation': 0,
 #     'batch_size': 1, 'epochs': 3, 'validation_split': 0}
 
 # Output layer with 20 nodes (one for each possible letter/number we predict)
 model.add(Dense(20, activation="softmax"))
+# model.add(Dropout(.1))
 
 # Ask Keras to build the TensorFlow model behind the scenes
 model.compile(loss="categorical_crossentropy",
@@ -90,7 +95,7 @@ tbCallBack = keras.callbacks.TensorBoard(log_dir="./logs/train/numDense" + str(n
 # Train the neural network
 model.fit(X_train, Y_train,
           validation_data=(X_test, Y_test),
-        #   callbacks=[tbCallBack],
+          #   callbacks=[tbCallBack],
           batch_size=32, epochs=numEpochs, verbose=1)
 
 # Save the trained model to disk

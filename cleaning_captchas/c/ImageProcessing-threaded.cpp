@@ -37,7 +37,7 @@ void extractLetters(string captchaText, Mat image, vector<Rect> letterBoundingBo
 		letter = Mat(image, colRange, rowRange);
 		charDir = captchaText.at(i);
 		mkdir((outFile + charDir).c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-		imwrite(((string)(outFile + charDir + "/" + to_string(charCounts[charDir]) + ".jpg")).c_str(), letter, compression_params);
+		imwrite(((string)(outFile + charDir + "/" + to_string(charCounts[charDir]) + captchaText + ".jpg")).c_str(), letter, compression_params);
 		charCounts[charDir] += 1;
 	}
 	return;
@@ -189,8 +189,8 @@ void createOutDirsIfNotExists(string processedImageDir, string extracted_letter_
 bool compareRects(Rect l, Rect r)
 {
 	if (l.y == r.y)
-		return l.x < r.x;
-	return (l.y < r.y);
+		return l.x > r.x;
+	return (l.y > r.y);
 }
 
 Rect rectUnion(Rect a, Rect b)

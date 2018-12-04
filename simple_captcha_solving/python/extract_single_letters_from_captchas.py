@@ -5,8 +5,8 @@ import glob
 import imutils
 
 
-CAPTCHA_IMAGE_FOLDER = "../../data/solution_cleaned"
-OUTPUT_FOLDER = "extracted_letters"
+CAPTCHA_IMAGE_FOLDER = "../../train/"
+OUTPUT_FOLDER = "extracted_letter_images"
 
 
 # Get a list of all the captcha images we need to process
@@ -60,8 +60,8 @@ for (i, captcha_image_file) in enumerate(captcha_image_files):
 
     # If we found more or less than 4 letters in the captcha, our letter extraction
     # didn't work correcly. Skip the image instead of saving bad training data!
-    if len(letter_image_regions) != 6:
-        continue
+    # if len(letter_image_regions) != 4:
+        # continue
 
     # Sort the detected letter images based on the x coordinate to make sure
     # we are processing them from left-to-right so we match the right image
@@ -81,7 +81,6 @@ for (i, captcha_image_file) in enumerate(captcha_image_files):
 
         # if the output directory does not exist, create it
         if not os.path.exists(save_path):
-            print("making the directory for extracted letters")
             os.makedirs(save_path)
 
         # write the letter image to a file
@@ -91,13 +90,3 @@ for (i, captcha_image_file) in enumerate(captcha_image_files):
 
         # increment the count for the current key
         counts[letter_text] = count + 1
-
-def count_letter_samples(extracted_dir):
-    letter_counts = dict()
-    for dir in os.listdir(extracted_dir):
-        letter_counts[dir] = len(os.listdir(os.path.join(extracted_dir,dir)))
-
-    for letter in sorted(letter_counts.keys()):
-        print("We have",letter_counts[letter],"instances of",letter)
-
-count_letter_samples(OUTPUT_FOLDER)
